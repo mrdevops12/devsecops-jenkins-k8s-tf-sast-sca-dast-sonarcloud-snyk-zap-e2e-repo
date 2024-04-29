@@ -1,12 +1,12 @@
 pipeline {
   agent any
   tools { 
-        maven 'Maven_3_5_2'  
+        maven 'Maven_3_6_3'  
     }
    stages{
     stage('CompileandRunSonarAnalysis') {
             steps {	
-		sh 'mvn clean verify sonar:sonar -Dsonar.projectKey=asgbuggywebapp -Dsonar.organization=asgbuggywebapp -Dsonar.host.url=https://sonarcloud.io -Dsonar.token=932558e169d66a8f1d1adf470b908a46156f5844'
+		sh 'mvn clean verify sonar:sonar -Dsonar.projectKey=testing-devsec -Dsonar.organization=testing-devsec -Dsonar.host.url=https://sonarcloud.io -Dsonar.token=0c4aff24e69fdd93c950fa541bbfaee291f45b31'
 			}
     }
 
@@ -29,15 +29,14 @@ pipeline {
     }
 
 	stage('Push') {
-            steps {
-                script{
-                    docker.withRegistry('https://145988340565.dkr.ecr.us-west-2.amazonaws.com', 'ecr:us-west-2:aws-credentials') {
-                    app.push("latest")
-                    }
-                }
-            }
-    	}
-	   
+           steps {
+              script {
+                 sh "aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 911269364388.dkr.ecr.ap-south-1.amazonaws.com"
+                 app = docker.build("911269364388.dkr.ecr.ap-south-1.amazonaws.com/asg", '.')
+                 app.push("latest")
+          }
+       }
+    }
 	stage('Kubernetes Deployment of ASG Bugg Web Application') {
 	   steps {
 	      withKubeConfig([credentialsId: 'kubelogin']) {
